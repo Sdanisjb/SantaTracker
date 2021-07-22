@@ -1,9 +1,8 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
-import L from "leaflet";
+import L, { TileLayer } from "leaflet";
 import { Polyline as WrappedPolyline } from "leaflet.antimeridian/src/vector/Wrapped.Polyline";
 import { Marker, useMap } from "react-leaflet";
-
 import Layout from "components/Layout";
 import Container from "components/Container";
 import Map from "components/Map";
@@ -48,6 +47,8 @@ const MapEffect = ({ markerRef }) => {
 			);
 			const lastKnownDestination =
 				destinationsWithPresents[destinationsWithPresents.length - 1];
+
+			//Importamos el estilo de la API de mapbox para nuestro mapa
 
 			//Agregamos los iconos de regalos para cada parada de Papa Noel
 			destinationsWithPresents.map((destination) => {
@@ -133,7 +134,7 @@ const IndexPage = () => {
 
 	const mapSettings = {
 		center: CENTER,
-		defaultBaseMap: "OpenStreetMap",
+		defaultBaseMap: "mapbox",
 		zoom: DEFAULT_ZOOM,
 	};
 
