@@ -1,41 +1,20 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import L from "leaflet";
+import { Polyline as WrappedPolyline } from "leaflet.antimeridian/src/vector/Wrapped.Polyline";
 import { Marker, useMap } from "react-leaflet";
-
-import { promiseToFlyTo, getCurrentLocation } from "lib/map";
 
 import Layout from "components/Layout";
 import Container from "components/Container";
 import Map from "components/Map";
 import Snippet from "components/Snippet";
 
-import gatsby_astronaut from "assets/images/gatsby-astronaut.jpg";
-
 const LOCATION = {
-  lat: 38.9072,
-  lng: -77.0369,
+	lat: 38.9072,
+	lng: -77.0369,
 };
 const CENTER = [LOCATION.lat, LOCATION.lng];
-const DEFAULT_ZOOM = 2;
-const ZOOM = 10;
-
-const timeToZoom = 2000;
-const timeToOpenPopupAfterZoom = 4000;
-const timeToUpdatePopupAfterZoom = timeToOpenPopupAfterZoom + 3000;
-
-const popupContentHello = `<p>Hello 👋</p>`;
-const popupContentGatsby = `
-  <div class="popup-gatsby">
-    <div class="popup-gatsby-image">
-      <img class="gatsby-astronaut" src=${gatsby_astronaut} />
-    </div>
-    <div class="popup-gatsby-content">
-      <h1>Gatsby Leaflet Starter</h1>
-      <p>Welcome to your new Gatsby site. Now go build something great!</p>
-    </div>
-  </div>
-`;
+const DEFAULT_ZOOM = 1;
 
 /**
  * MapEffect
@@ -43,77 +22,144 @@ const popupContentGatsby = `
  */
 
 const MapEffect = ({ markerRef }) => {
-  const map = useMap();
+	const map = useMap();
 
-  useEffect(() => {
-    if (!markerRef.current || !map) return;
+	useEffect(() => {
+		if (!markerRef && !map) return;
+		let route, routeJson;
+		async function fetchData() {
+			try {
+				route = await fetch(
+					"https://firebasestorage.googleapis.com/v0/b/santa-tracker-firebase.appspot.com/o/route%2Fsanta_en.json?alt=media&2018b"
+				);
+				routeJson = await route.json();
+			} catch (e) {
+				console.log(`Failed to find Santa!: ${e}`);
+			}
+			console.log("routeJson", routeJson);
 
-    (async function run() {
-      const popup = L.popup({
-        maxWidth: 800,
-      });
+			const { destinations = [] } = routeJson || {};
+			console.log("Destinations", destinations);
+			const destinationsVisited = destinations.filter(
+				({ arrival }) => arrival < 1577271600001
+			);
+			const destinationsWithPresents = destinationsVisited.filter(
+				({ presentsDelivered }) => presentsDelivered > 0
+			);
+			const lastKnownDestination =
+				destinationsWithPresents[destinationsWithPresents.length - 1];
 
-      const location = await getCurrentLocation().catch(() => LOCATION);
+			//Agregamos los iconos de regalos para cada parada de Papa Noel
+			destinationsWithPresents.map((destination) => {
+				const { location } = destination;
+				const { lat, lng } = location;
+				const markLatLong = new L.LatLng(lat, lng);
+				const presentMarker = L.marker(markLatLong, {
+					icon: L.divIcon({
+						className: "icon",
+						html: `<div class="icon-present">🎁</div>`,
+						iconSize: 5,
+					}),
+				});
+				presentMarker.addTo(map);
+				presentMarker.bindPopup(
+					"Se entregaron " + destination.presentsDelivered + " regalos"
+				);
+			});
 
-      const { current: marker } = markerRef || {};
+			if (destinationsWithPresents.length === 0) {
+				// Create a Leaflet Market instance using Santa's LatLng location
+				const center = new L.LatLng(0, 0);
+				const noSanta = L.marker(center, {
+					icon: L.divIcon({
+						className: "icon",
+						html: `<div class="icon-santa">🎅</div>`,
+						iconSize: 20,
+					}),
+				});
+				noSanta.addTo(map);
+				noSanta.bindPopup("Papa Noel sigue en el Polo Norte");
+				noSanta.openPopup();
+				return;
+			}
+			const santaLocation = new L.LatLng(
+				lastKnownDestination.location.lat,
+				lastKnownDestination.location.lng
+			);
 
-      marker.setLatLng(location);
-      popup.setLatLng(location);
-      popup.setContent(popupContentHello);
+			const santaMarker = L.marker(santaLocation, {
+				icon: L.divIcon({
+					className: "icon",
+					html: `<div class="icon-santa">🎅</div>`,
+					iconSize: 20,
+				}),
+			});
 
-      setTimeout(async () => {
-        await promiseToFlyTo(map, {
-          zoom: ZOOM,
-          center: location,
-        });
+			santaMarker.addTo(map);
 
-        marker.bindPopup(popup);
+			// Create a set of LatLng coordinates that make up Santa's route
 
-        setTimeout(() => marker.openPopup(), timeToOpenPopupAfterZoom);
-        setTimeout(
-          () => marker.setPopupContent(popupContentGatsby),
-          timeToUpdatePopupAfterZoom
-        );
-      }, timeToZoom);
-    })();
-  }, [map, markerRef]);
+			const santasRouteLatLngs = destinationsWithPresents.map((destination) => {
+				const { location } = destination;
+				const { lat, lng } = location;
+				return new L.LatLng(lat, lng);
+			});
 
-  return null;
+			// Utilize Leaflet's Polyline to add the route to the map
+
+			const santasRoute = new WrappedPolyline(santasRouteLatLngs, {
+				weight: 2,
+				color: "green",
+				opacity: 1,
+				fillColor: "green",
+				fillOpacity: 0.5,
+			});
+
+			// Add Santa to the map!
+
+			santasRoute.addTo(map);
+		}
+
+		fetchData();
+
+		return;
+	}, [map, markerRef]);
+
+	return null;
 };
 
 const IndexPage = () => {
-  const markerRef = useRef();
+	const markerRef = useRef();
 
-  const mapSettings = {
-    center: CENTER,
-    defaultBaseMap: "OpenStreetMap",
-    zoom: DEFAULT_ZOOM,
-  };
+	const mapSettings = {
+		center: CENTER,
+		defaultBaseMap: "OpenStreetMap",
+		zoom: DEFAULT_ZOOM,
+	};
 
-  return (
-    <Layout pageName="home">
-      <Helmet>
-        <title>Home Page</title>
-      </Helmet>
+	return (
+		<Layout pageName="home">
+			<Helmet>
+				<title>Home Page</title>
+			</Helmet>
 
-      <Map {...mapSettings}>
-        <MapEffect markerRef={markerRef} />
-        <Marker ref={markerRef} position={CENTER} />
-      </Map>
+			<Map {...mapSettings}>
+				<MapEffect markerRef={markerRef} />
+			</Map>
 
-      <Container type="content" className="text-center home-start">
-        <h2>Still Getting Started?</h2>
-        <p>Run the following in your terminal!</p>
-        <Snippet>
-          gatsby new [directory]
-          https://github.com/colbyfayock/gatsby-starter-leaflet
-        </Snippet>
-        <p className="note">
-          Note: Gatsby CLI required globally for the above command
-        </p>
-      </Container>
-    </Layout>
-  );
+			<Container type="content" className="text-center home-start">
+				<h2>Still Getting Started?</h2>
+				<p>Run the following in your terminal!</p>
+				<Snippet>
+					gatsby new [directory]
+					https://github.com/colbyfayock/gatsby-starter-leaflet
+				</Snippet>
+				<p className="note">
+					Note: Gatsby CLI required globally for the above command
+				</p>
+			</Container>
+		</Layout>
+	);
 };
 
 export default IndexPage;

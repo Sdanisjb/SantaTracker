@@ -4,21 +4,52 @@
 @import "pages/__pages";
 
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-  font-family: $font-default;
-  padding: 0;
-  margin: 0;
+	font-family: $font-default;
+	padding: 0;
+	margin: 0;
 }
 
 .wrapper {
-  min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+	min-height: 100vh;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
 }
 
 main {
-  padding: 2em 0;
+	padding: 2em 0;
+}
+
+.icon {
+	& > div {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		overflow: hidden;
+		border-radius: 100%;
+		box-shadow: 0 3px 4px rgba(0, 0, 0, 0.4);
+		border: none;
+		transition: all 0.2s;
+
+		&:hover {
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+		}
+	}
+}
+
+.icon-santa {
+	width: 50px;
+	height: 50px;
+	font-size: 3em;
+	background: white;
+}
+
+.icon-present {
+	width: 25px;
+	height: 25px;
+	font-size: 1em;
+	background: goldenrod;
 }
