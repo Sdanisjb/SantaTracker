@@ -141,7 +141,7 @@ const IndexPage = () => {
 	return (
 		<Layout pageName="home">
 			<Helmet>
-				<title>Home Page</title>
+				<title>Rastreador de Papá Noel</title>
 			</Helmet>
 
 			<Map {...mapSettings}>
@@ -149,8 +149,8 @@ const IndexPage = () => {
 			</Map>
 
 			<Container type="content" className="text-center home-start">
-				<h2>Still Getting Started?</h2>
-				<p>Run the following in your terminal!</p>
+				<h2>¿Quieres crear algo parecido?</h2>
+				<p>Ejecuta este código en tu terminal</p>
 				<Snippet>
 					gatsby new [directory]
 					https://github.com/colbyfayock/gatsby-starter-leaflet
