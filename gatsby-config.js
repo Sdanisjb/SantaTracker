@@ -13,6 +13,7 @@ const siteMetadata = {
 
 module.exports = {
 	siteMetadata,
+	pathPrefix: "/SantaTracker",
 	plugins: [
 		"gatsby-plugin-resolve-src",
 		{
