@@ -40,8 +40,9 @@ const MapEffect = ({ markerRef }) => {
 			const { destinations = [] } = routeJson || {};
 			console.log("Destinations", destinations);
 			const destinationsVisited = destinations.filter(
-				({ arrival }) => arrival < Date.now()
+				({ arrival }) => arrival < Date.now() - 31536000000 * 3
 			);
+
 			const destinationsWithPresents = destinationsVisited.filter(
 				({ presentsDelivered }) => presentsDelivered > 0
 			);
