@@ -75,7 +75,7 @@
     "test": "jest --config ./config/jest.config.js",
     "test:e2e:open": "start-server-and-test develop http://localhost:8000 cy:open",
     "test:e2e:run": "start-server-and-test develop http://localhost:8000 cy:run",
-    "deploy": "gatsby build --prefix-paths && gh-pages -d public -b master"
+    "deploy": "gatsby build --prefix-paths && gh-pages -d public -b gh-pages"
   },
   "husky": {
     "hooks": {
